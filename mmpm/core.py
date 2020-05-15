@@ -5,6 +5,7 @@ import json
 import datetime
 import shutil
 import sys
+from socket import gethostname, gethostbyname
 from textwrap import fill
 from tabulate import tabulate
 from urllib.error import HTTPError
@@ -722,7 +723,7 @@ def get_installed_modules(modules: dict) -> dict:
     return installed_modules
 
 
-def add_external_module_source(title: str = None, author: str = None, repo: str = None, desc: str = None) -> bool:
+def add_external_module(title: str = None, author: str = None, repo: str = None, desc: str = None) -> bool:
     '''
     Adds an external source for user to install a module from. This may be a
     private git repo, or a specific branch of a public repo. All modules added
@@ -826,6 +827,7 @@ def remove_external_module_source(titles: str = None) -> bool:
         return False
     return True
 
+
 def edit_magicmirror_config() -> bool:
     '''
     Allows user to edit the MagicMirror config file using their $EDITOR
@@ -841,3 +843,86 @@ def edit_magicmirror_config() -> bool:
         return True
     except Exception:
         return False
+
+
+def get_active_modules() -> None:
+
+    '''
+    Parses the MagicMirror config file for the modules listed, and reports
+    which modules are currently enabled. A module is considered disabled if the
+    module explictly contains a 'disabled' flag with a 'true' value. Otherwise,
+    the module is considered enabled.
+
+    Parameters:
+        None
+
+    Returns:
+        None
+    '''
+
+    if not os.path.exists(utils.MAGICMIRROR_CONFIG_FILE):
+        utils.error_msg('MagicMirror config file not found')
+        sys.exit(1)
+
+    dummy_config: str = f'{utils.MAGICMIRROR_ROOT}/config/dummy_config.js'
+    shutil.copyfile(utils.MAGICMIRROR_CONFIG_FILE, dummy_config)
+
+    with open(dummy_config, 'a') as dummy:
+        dummy.write('console.log(JSON.stringify(config))')
+
+    return_code, stdout, stderr = utils.run_cmd(['node', dummy_config], progress=False)
+    config: dict = json.loads(stdout.split('\n')[0])
+
+    # using -f so any errors can be ignored
+    utils.run_cmd(['rm', '-f', dummy_config], progress=False)
+
+    headers = [
+        colors.B_CYAN + 'Module' + colors.RESET,
+        colors.B_CYAN + 'Status' + colors.RESET
+    ]
+
+    ENABLED = colors.B_GREEN + 'Enabled' + colors.RESET
+    DISABLED = colors.B_RED + 'Disabled' + colors.RESET
+
+    rows: list = []
+
+    for module_config in config['modules']:
+        rows.append([
+            module_config['module'],
+            DISABLED if 'disabled' in module_config and module_config['disabled'] else ENABLED
+        ])
+
+    print(tabulate(rows, headers=headers, tablefmt='fancy_grid'))
+
+
+def get_web_interface_url() -> str:
+
+    '''
+    Parses the MMPM nginx conf file for the port number assigned to the web
+    interface, and returns a string containing containing the host IP and
+    assigned port.
+
+    Parameters:
+        None
+
+    Returns:
+        str: The URL of the MMPM web interface
+    '''
+
+    mmpm_conf_path = '/etc/nginx/sites-enabled/mmpm.conf'
+
+    if not os.path.exists(mmpm_conf_path):
+        utils.error_msg('The MMPM nginx configuration file does not appear to exist')
+        sys.exit(1)
+
+    # this value needs to be retrieved dynamically in case the user modifies the nginx conf
+    with open(mmpm_conf_path, 'r') as conf:
+        mmpm_conf = conf.read()
+
+    try:
+        port: str = re.findall(r"listen\s?\d+", mmpm_conf)[0].split()[1]
+    except IndexError:
+        utils.error_msg('Unable to retrieve the port number of the MMPM web interface')
+        sys.exit(1)
+
+    return f'http://{gethostbyname(gethostname())}:{port}'

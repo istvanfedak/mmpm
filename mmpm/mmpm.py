@@ -3,7 +3,7 @@
 import sys
 from mmpm import utils, colors, core, opts
 
-__version__ = 1.12
+__version__ = 1.13
 
 
 def main(argv):
@@ -76,12 +76,17 @@ def main(argv):
         utils.plain_print(utils.green_plus() + message)
         core.check_for_mmpm_enhancements(assume_yes=args.yes, gui=args.GUI)
 
-    elif args.add_ext_module_src:
-        core.add_external_module_source()
+    elif args.add_ext_module:
+        core.add_external_module()
 
     elif args.magicmirror_config:
         core.edit_magicmirror_config()
 
+    elif args.active_modules:
+        core.get_active_modules()
+
+    elif args.web_url:
+        print(f'The MMPM web interface is live at: {core.get_web_interface_url()}')
 
 
 if __name__ == "__main__":
