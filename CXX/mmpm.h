@@ -7,6 +7,6 @@
 
 void warning_message(const char* message);
 void error_message(const char* message);
-void display_modules(int length);
+void display_modules(const char*** modules, const int rows, const int columns);
 
 #endif
