@@ -10,55 +10,8 @@ from typing import List, Optional, Tuple
 from re import sub
 from mmpm import colors
 from shutil import which
-
-# String constants
-MMPM_ENV_VAR: str = 'MMPM_MAGICMIRROR_ROOT'
-MMPM_REPO_URL: str = "https://github.com/Bee-Mar/mmpm.git"
-MMPM_FILE_URL: str = "https://raw.githubusercontent.com/Bee-Mar/mmpm/master/mmpm/mmpm.py"
-MMPM_WIKI_URL: str = 'https://github.com/Bee-Mar/mmpm/wiki'
-MAGICMIRROR_MODULES_URL: str = "https://github.com/MichMich/MagicMirror/wiki/3rd-party-modules"
-MAKEFILE: str = 'Makefile'
-CMAKELISTS: str = 'CMakeLists.txt'
-PACKAGE_JSON: str = 'package.json'
-GEMFILE: str = 'Gemfile'
-
-HOME_DIR: str = os.path.expanduser("~")
-TITLE: str = 'Title'
-REPOSITORY: str = 'Repository'
-DESCRIPTION: str = 'Description'
-AUTHOR: str = 'Author'
-CATEGORY: str = 'Category'
-MAGICMIRROR_ROOT: str = os.environ[MMPM_ENV_VAR] if MMPM_ENV_VAR in os.environ else os.path.join(HOME_DIR, 'MagicMirror')
-MAGICMIRROR_CONFIG_FILE: str = join(MAGICMIRROR_ROOT, 'config', 'config.js')
-MMPM_CONFIG_DIR: str = join(HOME_DIR, '.config', 'mmpm')
-SNAPSHOT_FILE: str = join(MMPM_CONFIG_DIR, 'MagicMirror-modules-snapshot.json')
-MMPM_EXTERNAL_SOURCES_FILE: str = join(MMPM_CONFIG_DIR, 'mmpm-external-sources.json')
-EXTERNAL_MODULE_SOURCES: str = 'External Module Sources'
-
-
-class MMPMLogger():
-    '''
-    Object used for logging while MMPM is executing. Log files can be found in
-    ~/.config/mmpm/log
-    '''
-    def __init__(self):
-        self.log_file: str = os.path.join(MMPM_CONFIG_DIR, 'log', 'mmpm-cli-interface.log')
-        self.log_format = '%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s'
-        logging.basicConfig(filename=self.log_file, format=self.log_format)
-        logger: logging.Logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
-
-        self.handler = logging.handlers.RotatingFileHandler(
-            self.log_file,
-            mode='a',
-            maxBytes=1024*1024,
-            backupCount=2,
-            encoding=None,
-            delay=0
-        )
-
-        logger.addHandler(self.handler)
-        self.logger = logger
+from mmpm import consts, objects
+from mmpm.objects import MMPMLogger
 
 
 log: MMPMLogger = MMPMLogger()
@@ -115,9 +68,9 @@ def separator(message) -> None:
 
 
 def assert_snapshot_directory() -> bool:
-    if not os.path.exists(MMPM_CONFIG_DIR):
+    if not os.path.exists(consts.MMPM_CONFIG_DIR):
         try:
-            os.mkdir(MMPM_CONFIG_DIR)
+            os.mkdir(consts.MMPM_CONFIG_DIR)
         except OSError:
             error_msg('Failed to create directory for snapshot')
             return False
@@ -136,8 +89,8 @@ def calc_snapshot_timestamps() -> Tuple[float, float]:
     '''
     curr_snap = next_snap = None
 
-    if os.path.exists(SNAPSHOT_FILE):
-        curr_snap = os.path.getmtime(SNAPSHOT_FILE)
+    if os.path.exists(consts.SNAPSHOT_FILE):
+        curr_snap = os.path.getmtime(consts.SNAPSHOT_FILE)
         next_snap = curr_snap + 6 * 60 * 60
 
     return curr_snap, next_snap
@@ -156,7 +109,7 @@ def should_refresh_modules(current_snapshot: float, next_snapshot: float) -> boo
     '''
     if not current_snapshot and not next_snapshot:
         return True
-    return not os.path.exists(SNAPSHOT_FILE) or next_snapshot - time.time() <= 0.0
+    return not os.path.exists(consts.SNAPSHOT_FILE) or next_snapshot - time.time() <= 0.0
 
 
 def run_cmd(command: List[str], progress=True) -> Tuple[int, str, str]:
@@ -231,7 +184,7 @@ def open_default_editor(file_path: str) -> Optional[None]:
     log.logger.info(f'Attempting to open {file_path} in users default editor')
 
     if not file_path:
-        error_msg(f'MagicMirror config file not found. Please ensure {MMPM_ENV_VAR} is set properly.')
+        error_msg(f'MagicMirror config file not found. Please ensure {consts.MMPM_ENV_VAR} is set properly.')
         sys.exit(1)
 
     editor = os.getenv('EDITOR') if os.getenv('EDITOR') else 'nano'

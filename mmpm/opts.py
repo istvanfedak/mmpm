@@ -2,7 +2,7 @@
 # pylint: disable=unused-argument
 import argparse
 import sys
-from mmpm.utils import MMPM_WIKI_URL
+from mmpm.consts import MMPM_WIKI_URL
 
 
 def get_user_args() -> object:
