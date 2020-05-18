@@ -13,9 +13,7 @@ struct magic_mirror_module {
   char* repository;
 } module;
 
-void warning_message(const char *message);
-void error_message(const char *message);
-void display_modules(const char **modules, const int rows, const int columns);
+void display_modules(const char **modules[], const int rows, const int columns);
 
 void test_single_string(const char *string);
 void test_array_of_char_ptrs(const char **array, const int num_strings);

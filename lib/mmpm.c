@@ -1,13 +1,5 @@
 #include "mmpm.h"
 
-void error_message(const char *message) {
-  printf("%s\n", message);
-}
-
-void warning_message(const char *message) {
-  printf("%s\n", message);
-}
-
 void test_single_string(const char *string) {
   printf("C Function (test_single_string):\n\n%s\n", string);
 }
@@ -17,7 +9,7 @@ void test_array_of_char_ptrs(const char **array, const int num_strings) {
   for (int i = 0; i < num_strings; i++) { printf("%s\n", array[i]); }
 }
 
-void display_modules(const char ***modules, const int rows, const int width) {
+void display_modules(const char **modules[], const int rows, const int width) {
   ft_table_t *table = ft_create_table();
 
   ft_set_border_style(table, FT_BOLD2_STYLE);
